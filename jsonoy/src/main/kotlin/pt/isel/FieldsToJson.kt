@@ -11,8 +11,8 @@ fun Any.fieldsToJson(): String {
     return "{${jsonPairs.joinToString(",")}}"
 }
 
-private fun propToJson(field: KProperty<*>, target: Any): String {
-    val propValue = field.getter.call(target) ?: return """"${field.name}":null"""
+private fun propToJson(field: KProperty<*>, obj: Any): String {
+    val propValue = field.getter.call(obj) ?: return """"${field.name}":null"""
 
     return when (propValue) {
         is String -> """"${field.name}":"$propValue""""
