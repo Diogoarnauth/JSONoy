@@ -12,7 +12,7 @@ fun Any.membersToJson(): String {
     }.filter { it.isNotEmpty() }
 
     val result =  "{${jsonPairs.joinToString(",")}}"
-    println("ahhhhhhhhhhhhhhhhhhhhhhhhhhh $result" )
+    println("result $result" )
     return result
 }
 
