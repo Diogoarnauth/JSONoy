@@ -6,7 +6,7 @@ import kotlin.reflect.full.memberProperties
 fun Any.fieldsToJson(): String {
     val jsonPairs = this::class.memberProperties.map { properties ->
         propToJson(properties, this)
-    }.filter { it.isNotEmpty() }
+    }.filter { it.isNotEmpty() } // remove os nulls que existiam no obj e nao mete na string final
 
     return "{${jsonPairs.joinToString(",")}}"
 }

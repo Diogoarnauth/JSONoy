@@ -1,33 +1,39 @@
 package pt.isel
 
+import kotlin.reflect.KCallable
+import kotlin.reflect.KFunction
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.KProperty1
+import kotlin.reflect.full.createInstance
 import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.full.memberFunctions
 
 
 fun Any.membersToJson(): String {
     val jsonPairs = this::class.memberProperties.map { property ->
-        propToJson(property, this)
-    }.filter { it.isNotEmpty() }
+        callableToJson(property, this)
+    }
 
-    val result =  "{${jsonPairs.joinToString(",")}}"
+    val jsonFunctions = this::class.memberFunctions.filter{it.returnType.classifier != Unit::class && it.parameters.size == 1}.map { function ->
+        callableToJson(function, this)
+    }
+
+    val result = "{${(jsonPairs + jsonFunctions).joinToString(",")}}"
     println("result $result" )
     return result
 }
 
-private fun propToJson(property: KProperty1<*, *>, obj: Any): String {
-    val propValue = property.getter.call(obj) ?: return """"${property.name}":null"""
+private fun callableToJson(callable: KCallable<*>, obj: Any): String? {
+    val value = try {
+        callable.call(obj) // Chama tanto propriedades quanto funções
+    } catch (e: Exception) {
+        return null
+    } ?: return """"${callable.name}":null"""
 
-
-    val jsonKey = property.findAnnotation<ToJsonPropName>()?.name ?: property.name
-    println("jsonKey $jsonKey")
-
-    val formatterClass = property.findAnnotation<ToJsonFormatter>()?.formatter
-    println("formatterClass $formatterClass")
-
-    val formattedValue = formatterClass?.objectInstance?.format(propValue) ?: propValue
-    println("formattedValue $formattedValue")
+    val jsonKey = callable.findAnnotation<ToJsonPropName>()?.name ?: callable.name
+    val formatterClass = callable.findAnnotation<ToJsonFormatter>()?.formatter?.createInstance()
+    val formattedValue = formatterClass?.format(value) ?: value
 
     return when (formattedValue) {
         is String -> """"$jsonKey":"$formattedValue""""
